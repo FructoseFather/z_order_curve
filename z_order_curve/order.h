@@ -7,68 +7,73 @@
 #include <math.h>
 #include <tuple>
 #include <algorithm>
+#include <limits.h>
 
 using namespace std;
 
 class Elem
 {
-    double x, y;              // coordinates
+    unsigned int x, y;        // coordinates
     unsigned long long z_val; // z coordinate / value
     int origin_id;            // id of node
 
 public:
     /**
      * Constructor
-     * @param double x coordinate
-     * @param double y coordinate
+     * @param unsigned int x coordinate
+     * @param unsigned int y coordinate
      * @param int id of node 
      */
-    Elem(double, double, int);
+    Elem(unsigned int, unsigned int, int);
 
     /**
-     * sets z value to some element
+     * sets z value to this element
      * @param unsigned long long z value 
      */
     void set_z_val(unsigned long long);
 
     /**
-     * Returns z value of some element
+     * Returns z value of this element
      * @return unsigned long long z value
      */
     unsigned long long get_z_val();
 
     /**
-     * Returns id of some element
+     * Returns id of this element
      * @return int id
      */
     int get_origin_id();
 
     /**
-     * Returns x coordinate of some element
-     * @return double x coordinate
+     * Returns x coordinate of this element
+     * @return unsigned int x coordinate
      */
-    double get_x();
+    unsigned int get_x();
 
     /**
-     * Returns y coordinate of some element
-     * @return double y coordinate
+     * Returns y coordinate of this element
+     * @return unsigned int y coordinate
      */
-    double get_y();
+    unsigned int get_y();
 };
 
 class Order
 {
-    double max_x, min_x, max_y, min_y; // min and max of both dimensions
-    vector<Elem *> curve;              // the curve itself
-    bool normalized;                   // flag if curve is ordered and normalized
-    int elements;                      // # elements in curve
+    vector<Elem *> curve; // the curve itself
+    bool ordered;         // flag if curve is ordered
+    int elements;         // # elements in curve
 
 public:
     /**
-     * Constructor 
-     * @param vector of tuples with type <double x, double y, int id>
+     * Default constructor 
      */
-    Order(vector<tuple<double, double, int>>);
+    Order();
+
+    /**
+     * Constructor 
+     * @param vector of tuples with type <unsigned int x, unsigned int y, int id>
+     */
+    Order(vector<tuple<unsigned int, unsigned int, int>>);
 
     /**
      * Destructor
@@ -88,20 +93,20 @@ public:
     /**
      * Method for finding the m nearest elements to some element (calls binary_search())
      * Time complexity O(n log n) if normalized=false, O(log n) otherwise
-     * @param double x coordinate of searched element
-     * @param double y coordinate of searched element
+     * @param unsigned int x coordinate of searched element
+     * @param unsigned int y coordinate of searched element
      * @param int size of m (# nearest elements)
      * @return vector of int origin ids of the nextmost elements
      */
-    vector<int> find(double, double, int);
+    vector<int> find(unsigned int, unsigned int, int);
 
     /**
      * Inserts an element into the curve 
-     * (lazy, ordering and normalization is done by next find() call)
+     * (lazy, ordering is done by next find() call)
      * Time complexity O(1)
-     * @param tuple of type <double x, double y, int id>
+     * @param tuple of type <unsigned int x, unsigned int y, int id>
      */
-    void insert(tuple<double, double, int>);
+    void insert(tuple<unsigned int, unsigned int, int>);
 
     /**
      * Normalizes and sorts all elements of z order curve accdording to their z value
@@ -112,47 +117,34 @@ public:
      * Prints all elements of the curve to the console
      */
     void print_order();
+
+    /**
+     * Returns the id of an index
+     * @param int index
+     * @return int id 
+     */
+    int get_id_of_index(int);
+
+    /**
+     * Returns the z val of an index
+     * @param int index
+     * @return unsigned long long z val 
+     */
+    unsigned long long get_zval_of_index(int);
+
+    /**
+     * Returns the size of the z order curve
+     * @return int size
+     */
+    int size();
 };
 
 /**
- * Calculates the z value according to x and y coordinates
- * @param unsigned long long x coordinate
- * @param unsigned long long y coordinate
+ * Calculates the z value according to x and y coordinates.
+ * @param unsigned int x coordinate of element
+ * @param unsigned int y coordinate of element
  * @param pointer to unsigned long long z coordinate
  */
-void calculate_z_val_recursion(unsigned long, unsigned long, unsigned long long *);
-
-/**
- * Calculates the z value according to x and y coordinates. 
- * Values are first normalized and then recursive method is called
- * @param double max x coordinate of z order curve
- * @param double min x coordinate of z order curve
- * @param double max y coordinate of z order curve
- * @param double min y coordinate of z order curve
- * @param double x coordinate of element
- * @param double y coordinate of element
- * @param pointer to unsigned long long z coordinate
- */
-void calculate_z_val(double, double, double, double, double, double, unsigned long long *);
-
-/**
- * Transforms a double into an unsigned long
- * Mantissa and Exponent are used in their binary representation
- * @param double value
- * @return unsigned long transformed value
- */
-unsigned long get_mantissa(double);
-
-/**
- * Normalizes x and y coordinates according to their min and max in the curve
- * @param double max x coordinate of z order curve
- * @param double min x coordinate of z order curve
- * @param double max y coordinate of z order curve
- * @param double min y coordinate of z order curve
- * @param double x coordinate that has to be normalized
- * @param double y coordinate that has to be normalized
- * @return pair of type <double x, double y>
- */
-pair<double, double> normalize(double, double, double, double, double, double);
+void calculate_z_val(unsigned int, unsigned int, unsigned long long *);
 
 #endif
