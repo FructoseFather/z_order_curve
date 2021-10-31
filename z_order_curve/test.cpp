@@ -53,5 +53,7 @@ int main(int argc, char *argv[])
     }
     cout << endl;
 
+    cout << curve.find(5,0,1)[0] << endl;
+
     return 0;
 }
