@@ -8,13 +8,14 @@
 #include <tuple>
 #include <algorithm>
 #include <limits.h>
+#include <bitset>
 
 using namespace std;
 
 class Elem
 {
     unsigned int x, y;        // coordinates
-    unsigned long long z_val; // z coordinate / value
+    unsigned long z_val; // z coordinate / value
     int origin_id;            // id of node
 
 public:
@@ -30,13 +31,13 @@ public:
      * sets z value to this element
      * @param unsigned long long z value 
      */
-    void set_z_val(unsigned long long);
+    void set_z_val(unsigned long);
 
     /**
      * Returns z value of this element
      * @return unsigned long long z value
      */
-    unsigned long long get_z_val();
+    unsigned long get_z_val();
 
     /**
      * Returns id of this element
@@ -62,6 +63,7 @@ class Order
     vector<Elem *> curve; // the curve itself
     bool ordered;         // flag if curve is ordered
     int elements;         // # elements in curve
+    unsigned int min,max;
 
 public:
     /**
@@ -88,7 +90,7 @@ public:
      * @param unsigned long long z value of searched element
      * @return int index of nearest element to searched element
      */
-    int binary_search(int, int, unsigned long long *);
+    int binary_search(int, int, unsigned long *);
 
     /**
      * Method for finding the m nearest elements to some element (calls binary_search())
@@ -130,7 +132,7 @@ public:
      * @param int index
      * @return unsigned long long z val 
      */
-    unsigned long long get_zval_of_index(int);
+    unsigned long get_zval_of_index(int);
 
     /**
      * Returns the size of the z order curve
@@ -139,12 +141,13 @@ public:
     int size();
 };
 
-/**
- * Calculates the z value according to x and y coordinates.
- * @param unsigned int x coordinate of element
- * @param unsigned int y coordinate of element
- * @param pointer to unsigned long long z coordinate
- */
-void calculate_z_val(unsigned int, unsigned int, unsigned long long *);
+void calculate_z_val_recursion(unsigned int x, unsigned int y, unsigned long *z);
+
+void calculate_z_val(unsigned int, unsigned int, unsigned long *);
+
+double normalize(unsigned int, unsigned int, unsigned int);
+
+unsigned int getMantissa(double);
+
 
 #endif

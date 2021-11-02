@@ -10,12 +10,12 @@ Elem::Elem(unsigned int x_, unsigned int y_, int id_)
     z_val = 0;
 }
 
-void Elem::set_z_val(unsigned long long z_val_)
+void Elem::set_z_val(unsigned long z_val_)
 {
     z_val = z_val_;
 }
 
-unsigned long long Elem::get_z_val()
+unsigned long Elem::get_z_val()
 {
     return z_val;
 }
@@ -39,13 +39,13 @@ unsigned int Elem::get_y()
 
 Order::Order()
 {
+    min=UINT_MAX;
+    max=0;
     elements = 0;
 }
 
-Order::Order(vector<tuple<unsigned int, unsigned int, int>> coords)
+Order::Order(vector<tuple<unsigned int, unsigned int, int>> coords) : Order()
 {
-    elements = 0;
-
     for (tuple<unsigned int, unsigned int, int> tpl : coords)
     {
         insert(tpl);
@@ -60,7 +60,7 @@ Order::~Order()
     }
 }
 
-int Order::binary_search(int left, int right, unsigned long long *l)
+int Order::binary_search(int left, int right, unsigned long *l)
 {
     if (right >= left)
     {
@@ -108,7 +108,7 @@ vector<int> Order::find(unsigned int x, unsigned int y, int range)
     }
     vector<int> result;
 
-    unsigned long long search = 0;
+    unsigned long search = 0;
     calculate_z_val(x, y, &search);
 
     // start binary search
@@ -156,6 +156,10 @@ vector<int> Order::find(unsigned int x, unsigned int y, int range)
 void Order::insert(tuple<unsigned int, unsigned int, int> tpl)
 {
     ordered = false;
+    if(get<0>(tpl)<min)min=get<0>(tpl);
+    if(get<0>(tpl)>max)max=get<0>(tpl);
+    if(get<1>(tpl)<min)min=get<1>(tpl);
+    if(get<1>(tpl)>max)max=get<1>(tpl);
 
     elements++;
 
@@ -167,11 +171,21 @@ void Order::insert(tuple<unsigned int, unsigned int, int> tpl)
 void Order::order_curve()
 {
     // first set all z values to the elements
-    unsigned long long l;
+    unsigned long l;
+    max += 1;
 
     for (Elem *e : curve)
     {
-        calculate_z_val(e->get_x(), e->get_y(), &l);
+        unsigned int xn = getMantissa(normalize(max, min, e->get_x()));
+        unsigned int yn = getMantissa(normalize(max, min, e->get_y()));
+        calculate_z_val(xn,yn,&l);
+
+        string binx = bitset<32>(xn).to_string();
+        string biny = bitset<32>(yn).to_string();
+        string binl = bitset<64>(l).to_string();
+
+        //cout << "x binary: " << binx << ", y binary: " << biny << ", l binary: " << binl << endl;
+
         e->set_z_val(l);
         l = 0;
     }
@@ -199,7 +213,7 @@ int Order::get_id_of_index(int index)
     return curve[index]->get_origin_id();
 }
 
-unsigned long long Order::get_zval_of_index(int index)
+unsigned long Order::get_zval_of_index(int index)
 {
     return curve[index]->get_z_val();
 }
@@ -211,10 +225,10 @@ int Order::size()
 
 // ********************* Other Methods *********************
 
-void calculate_z_val(unsigned int x, unsigned int y, unsigned long long *z)
+/* void calculate_z_val(unsigned int x, unsigned int y, unsigned long *z)
 {
-    static const unsigned long BITMASK[] = {0x55555555, 0x33333333, 0x0F0F0F0F, 0x00FF00FF};
-    static const unsigned long BITSHIFTS[] = {1, 2, 4, 8};
+    static const unsigned int BITMASK[] = {0x55555555, 0x33333333, 0x0F0F0F0F, 0x00FF00FF};
+    static const unsigned int BITSHIFTS[] = {1, 2, 4, 8};
 
     x = (x | (x << BITSHIFTS[3])) & BITMASK[3];
     x = (x | (x << BITSHIFTS[2])) & BITMASK[2];
@@ -227,4 +241,71 @@ void calculate_z_val(unsigned int x, unsigned int y, unsigned long long *z)
     y = (y | (y << BITSHIFTS[0])) & BITMASK[0];
 
     *z = x | (y << 1);
+} */
+
+void calculate_z_val_recursion(unsigned int x, unsigned int y, unsigned long *z)
+{
+    if (x || y)
+    {
+        calculate_z_val_recursion(x >> 1, y >> 1, z);
+        if (y % 2)
+            *z = *z + 1;
+        *z = *z << 1;
+        if (x % 2)
+            *z = *z + 1;
+        *z = *z << 1;
+    }
+    else
+    {
+        *z = 0;
+    }
 }
+
+void calculate_z_val(unsigned int x, unsigned int y, unsigned long *z)
+{
+    calculate_z_val_recursion(x,y, z);
+
+    *z = *z >> 1;
+
+    unsigned long a = 1;
+    a = a << 63;
+    if (y>>31) *z += a;
+}
+
+double normalize( unsigned int max, unsigned int min, unsigned int x){
+    return ((double)(x-min))/((double)(max-min));
+}
+
+
+unsigned int getMantissa(double v){
+    int exp;
+	double mantissa = frexp(v,&exp);
+
+    //cout << v << " = " << mantissa << " * 2^" << exp << endl;
+
+    unsigned int result = 0;
+
+	int remaining = sizeof(unsigned int)*8 + exp;
+	//cout << remaining << " bits remaning" << endl;
+
+	while (--remaining) {
+
+		mantissa *= 2;
+		if (mantissa >= 1) {
+			result ++;
+			mantissa --;
+		}
+		result = result << 1;
+	}
+
+	//cout << "result: " << result << endl;
+
+	//string bin = bitset<64>(result).to_string();
+
+	//cout << "result binary: " << bin << endl;
+
+    return result;
+}
+	
+
+	
